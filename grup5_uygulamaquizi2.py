@@ -118,7 +118,7 @@ def main():
     b_parts = []
     temp = ""
     for i in range(0, 128):
-        temp = temp + a[i]
+        temp = temp + b[i]
         if i % 8 == 0 and i != 0:
             print("TEST")
             b_parts.append(temp)
@@ -132,7 +132,7 @@ def main():
     temp1 = binary_to_number(a_parts[0]) ^ binary_to_number(a_parts[1])
     temp2 = ~binary_to_number(a_parts[8])
     temp3 = temp1 ^ temp2
-    temp4 = temp3 ^ binary_to_number(a_parts[0])
+    temp4 = temp3 ^ binary_to_number(b_parts[0])
 
     a_parts.insert(15, number_to_binary(temp4, 8)[1:8])
     print("New")
