@@ -14,6 +14,8 @@
 
 import os
 import random
+import tkinter as tk
+from tkinter import simpledialog, messagebox
 
 
 def number_to_binary(number: int, bit_number: int) -> str:
@@ -37,21 +39,14 @@ def hex_to_number(hex_str: str) -> int:
     return int(s, 16)
 
 
-# -------
-
-import tkinter as tk
-import random
-from tkinter import simpledialog, messagebox
-
-
 def generate_spiral(n):
     grid = [[0] * n for _ in range(n)]
-    dx, dy = 0, 1
+    dx, dy = 1, 0  # Start moving down
     x, y = 0, 0
     for i in range(1, n * n + 1):
         grid[x][y] = i
         if not (0 <= x + dx < n and 0 <= y + dy < n and grid[x + dx][y + dy] == 0):
-            dx, dy = dy, -dx  # rotate
+            dx, dy = -dy, dx  # rotate clockwise (down -> right -> up -> left)
         x += dx
         y += dy
     return grid
@@ -67,22 +62,70 @@ def get_spiral_path(grid):
     return path
 
 
+def get_top_right_to_bottom_path(size):
+    # Create a path that starts at top right and goes down in a spiral pattern
+    grid = [[0] * size for _ in range(size)]
+    
+    # Initialize position at top right
+    x, y = 0, size - 1
+    
+    # Direction vectors for: right, down, left, up
+    dx = [0, 1, 0, -1]
+    dy = [-1, 0, 1, 0]
+    
+    direction = 1  # Start going down
+    cell_value = 1
+    
+    grid[x][y] = cell_value
+    
+    while cell_value < size * size:
+        # Try to move in the current direction
+        new_x = x + dx[direction]
+        new_y = y + dy[direction]
+        
+        # Check if the new position is valid
+        if (0 <= new_x < size and 0 <= new_y < size and grid[new_x][new_y] == 0):
+            x, y = new_x, new_y
+            cell_value += 1
+            grid[x][y] = cell_value
+        else:
+            # Change direction (0->1->2->3->0)
+            direction = (direction + 1) % 4
+    
+    # Create the path from the grid
+    value_to_pos = {}
+    for i in range(size):
+        for j in range(size):
+            value_to_pos[grid[i][j]] = (i, j)
+    
+    path = [value_to_pos[i] for i in range(1, size * size + 1)]
+    return path
+
+
 class SpiralGame:
     def __init__(self, root, size, obstacles):
         self.root = root
         self.root.title("Spiral Game")
         self.size = size
         self.grid = generate_spiral(size)
-        self.path = get_spiral_path(self.grid)  # full spiral path
         self.buttons = [[None for _ in range(self.size)] for _ in range(self.size)]
         self.obs_arr = []
         self.lastPath = []
 
         self.start_choice = self.ask_start_choice()  # 1 or 2
-        self.direction = 1 if self.start_choice == 1 else -1
-        self.index = 0 if self.direction == 1 else size - 1
-        self.current_pos = self.path[self.index]
+        
+        if self.start_choice == 1:
+            # Option 1: Start at top left and go down
+            self.path = get_spiral_path(self.grid)
+            self.direction = 1
+            self.index = 0
+        else:
+            # Option 2: Start at top right and go down
+            self.path = get_top_right_to_bottom_path(size)
+            self.direction = 1
+            self.index = 0
 
+        self.current_pos = self.path[self.index]
         self.obstacles = self.generate_obstacles(obstacles)
 
         self.create_grid()
@@ -98,10 +141,11 @@ class SpiralGame:
         while True:
             val = simpledialog.askinteger(
                 "Choose Start",
-                "Enter 1 to start at left or 2 to start at right:",
+                "Enter 1 to start at top left and go down, or 2 to start at top right and go down:",
                 minvalue=1,
                 maxvalue=2,
             )
+
             if val in [1, 2]:
                 return val
             messagebox.showerror("Invalid Choice", "Please choose 1 or 2.")
@@ -116,7 +160,7 @@ class SpiralGame:
         return obstacles
 
     def create_grid(self):
-        int_size = int(self.size)  # assuming self.size is defined
+        int_size = int(self.size)
         for i in range(int_size):
             for j in range(int_size):
                 rand_num = random.randint(0, 15)
@@ -190,8 +234,9 @@ class SpiralGame:
                         xor_result = hex_to_number(self.lastPath[i])
                     else:
                         xor_result ^= hex_to_number(self.lastPath[i])
-
-                print("XOR result:", xor_result)
+                
+                # XOR in hexadecimal
+                print("XOR result:", hex(xor_result))
 
         else:
             messagebox.showinfo("Done", "No more moves.")
@@ -206,13 +251,3 @@ if __name__ == "__main__":
     root = tk.Tk()
     game = SpiralGame(root, int(size), int(engelSayisi))
     root.mainloop()
-
-
-# def main():
-#     print("Quiz 3 - Grup 5")
-#     print("Enter your a:")
-#     a = input()
-
-
-# if __name__ == "__main__":
-#     main()
